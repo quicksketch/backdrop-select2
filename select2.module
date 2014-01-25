@@ -6,6 +6,15 @@
  *
  */
  
+/**
+ * The current module version.
+ * 
+ * This constant will be used for provide module version,
+ * when module installed directly from git repository
+ * 
+ */
+define('SELECT2_MODULE_VERSION', '7.x-1.x-dev');
+
 define('SELECT2_MIN_PLUGIN_VERSION', '3.4.5');
 define('SELECT2_PLUGIN_PATH', 'sites/all/libraries/select2');
 define('SELECT2_MODULE_PATH', drupal_get_path('module', 'select2'));
@@ -118,6 +127,18 @@ function select2_element_info() {
           '#value_callback' => 'select_2_hidden_value_callback',
       ),
   );
+}
+
+/**
+ * Implement hook_system_info_alter() to provide metadata of Select2 module to drupal,
+ * when it installed directly from git repository.
+ */
+function select2_system_info_alter(&$info, $file, $type) {
+  
+  if ($type == 'module' && $file->name == 'select2' && !$info['version']) {
+    $info['version'] = SELECT2_MODULE_VERSION;
+  }
+  
 }
 
 /**
