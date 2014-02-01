@@ -36,8 +36,8 @@ function select2_menu() {
 
 function select2_preprocess_page($vars) {
   if (variable_get('select2_use_for_all_select_elements', FALSE)) {
-    if (!path_is_admin(current_path()) ||
-    (path_is_admin(current_path()) && variable_get('select2_use_for_all_select_elements_for_admin_pages', FALSE))) {
+    if (!_select2_current_path_is_admin() ||
+    (_select2_current_path_is_admin() && variable_get('select2_use_for_all_select_elements_for_admin_pages', FALSE))) {
       libraries_load('select2');
     }
   }
@@ -195,8 +195,8 @@ function select2_select_element_process($element, &$form_state) {
   global $_select2_jq_version_warning;
   
   if (isset($_select2_jq_version_warning) || 
-      ((!path_is_admin(current_path()) && !select2_check_jq_front_end_version()) || 
-       (path_is_admin(current_path()) && !select2_check_jq_admin_mode_version()))) {
+      ((!_select2_current_path_is_admin(current_path()) && !select2_check_jq_front_end_version()) || 
+       (_select2_current_path_is_admin(current_path()) && !select2_check_jq_admin_mode_version()))) {
     
     if (!isset($_select2_jq_version_warning)) {
       drupal_set_message(t('Select2 plugin can\'t be used with current jQuery version. Check <a href="@status_info">status info</a> for other instructions.',
@@ -239,8 +239,8 @@ function select2_select_element_process($element, &$form_state) {
   }
   
   if (variable_get('select2_use_for_all_select_elements', FALSE) && !isset($element['#select2'])) {
-    if (!path_is_admin(current_path()) || 
-    (path_is_admin(current_path()) && variable_get('select2_use_for_all_select_elements_for_admin_pages', FALSE))) {
+    if (!_select2_current_path_is_admin() || 
+    (_select2_current_path_is_admin() && variable_get('select2_use_for_all_select_elements_for_admin_pages', FALSE))) {
       $element['#select2'] = $s2h_defaults;
     }
   }
@@ -951,10 +951,46 @@ function _select2_set_element_settings($element_id, $settings) {
 }
 
 
-function select2_options_field_widget_validate_for_none($element, &$form_state) {
+function _select2_current_path_is_admin() {
   
-  if (!$element['#value']) {
-    //form_set_value($element, '_none', $form_state);
+  $result = &drupal_static(__FUNCTION__, null);
+  
+  if ($result !== NULL) return $result;
+  
+  if (path_is_admin(current_path())){
+    $result = TRUE;
+    return TRUE;
   }
   
+  // AJAX check
+  if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) 
+      && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest'
+      && !empty($_SERVER['HTTP_REFERER'])) {
+    
+    // need to check request refferer url for admin path
+    
+    $referrer_url = $_SERVER['HTTP_REFERER'];
+    
+    $site_url_prefix = url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q=');
+    
+    $prefix_pos = strpos($referrer_url, $site_url_prefix);
+    
+    if ($prefix_pos === FALSE || $prefix_pos > 0) {
+      $result = FALSE;
+      return FALSE;
+    }
+    
+    $referrer_url_path = str_replace($site_url_prefix, '', $referrer_url);
+    
+    $patterns = path_get_admin_paths();
+    
+    if(path_is_admin($referrer_url_path)) {
+      $result = TRUE;
+      return TRUE;
+    }
+
+  }
+  
+  $result = FALSE;
+  return FALSE;
 }
