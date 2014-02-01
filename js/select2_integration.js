@@ -264,54 +264,60 @@
 				  
 				  try {
 					 $element.select2(options);
+					 
+					 //need add name attribute to select2-input element after Select2 init for element
+					 var contaner = $element.select2("container");
+					  
+					 var counter = 0;
+					  
+					 $('input', contaner).each(function(){
+					   var $select2_input = $(this);
+					     if ($select2_input.attr('name') == undefined) {
+							  $select2_input.attr('name', 'select2-input-' + counter);  
+							  $element.on("select2-blur", function() {
+							    $select2_input.prop('disabled', true);
+							  });
+							  $element.on("change", function() {
+								$select2_input.prop('disabled', true);
+							  });
+							  $select2_input.prop('disabled', true);
+							  counter++;
+						  }
+					 });
+					 //
+					 
+					 if ($.fn.sortable != undefined && 
+					   options.jqui_sortable != undefined && 
+					   options.jqui_sortable) {
+					    
+						 $element.select2("container").find("ul.select2-choices").sortable({
+					       containment: 'parent',
+					       start: function() { $element.select2("onSortStart"); },
+					       update: function() { $element.select2("onSortEnd"); }
+					     });
+					 }
+					 
 				  } catch (e) {
 					  console.error(t('Error while attaching select2 plugin to element. Error: ' + e ));
 				  }
 				  
-				  
-				  
-				  //need add name attribute to select2-input element after Select2 init for element
-				  var contaner = $element.select2("container");
-				  
-				  var counter = 0;
-				  
-				  $('input', contaner).each(function(){
-					  var $select2_input = $(this);
-					  if ($select2_input.attr('name') == undefined) {
-						  $select2_input.attr('name', 'select2-input-' + counter);  
-						  
-						  counter++;
-					  }
-				  });
-				  //
-				  
-				  $(document).mousedown(function(event){
-					  if ($(event.target).parents('.select2-drop').length === 0) { 
-						  var dropdown = $("#select2-drop"), self;
-	                      if (dropdown.length > 0) {
-	                        self=dropdown.data("select2");
-	                        if (self.opts.selectOnBlur) {
-	                            self.selectHighlighted({noFocus: true});
-	                        }
-	                        self.close();
-	                      }
-					  }
-				  });
-				  
-				  if ($.fn.sortable != undefined && 
-					  options.jqui_sortable != undefined && 
-					  options.jqui_sortable) {
-					  
-					  $element.select2("container").find("ul.select2-choices").sortable({
-			                containment: 'parent',
-			                start: function() { $element.select2("onSortStart"); },
-			                update: function() { $element.select2("onSortEnd"); }
-			          });
-				  }
 			  }
 			
 		});
 	};
+	
+	$(document).mousedown(function(event){
+		  if ($(event.target).parents('.select2-drop').length === 0) { 
+			  var dropdown = $("#select2-drop"), self;
+            if (dropdown.length > 0) {
+              self=dropdown.data("select2");
+              if (self.opts.selectOnBlur) {
+                  self.selectHighlighted({noFocus: true});
+              }
+              self.close();
+            }
+		  }
+	});
 	
 	Drupal.behaviors.select2_integration = {
 		  attach: function (context) {
@@ -347,7 +353,7 @@
 				  //
 				  
 			  }
-		  }
+		  },
 	};
 
 })(jQuery);
