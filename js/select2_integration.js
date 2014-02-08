@@ -265,27 +265,6 @@
 				  try {
 					 $element.select2(options);
 					 
-					 //need add name attribute to select2-input element after Select2 init for element
-					 var contaner = $element.select2("container");
-					  
-					 var counter = 0;
-					  
-					 $('input', contaner).each(function(){
-					   var $select2_input = $(this);
-					     if ($select2_input.attr('name') == undefined) {
-							  $select2_input.attr('name', 'select2-input-' + counter);  
-							  $element.on("select2-blur", function() {
-							    $select2_input.prop('disabled', true);
-							  });
-							  $element.on("change", function() {
-								$select2_input.prop('disabled', true);
-							  });
-							  $select2_input.prop('disabled', true);
-							  counter++;
-						  }
-					 });
-					 //
-					 
 					 if ($.fn.sortable != undefined && 
 					   options.jqui_sortable != undefined && 
 					   options.jqui_sortable) {
@@ -353,6 +332,7 @@
 				  //
 				  
 			  }
+			  
 		  },
 	};
 

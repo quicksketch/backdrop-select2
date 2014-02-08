@@ -232,6 +232,7 @@ function select2_select_element_process($element, &$form_state) {
     if ($element['#select2']['jqui_sortable']) {
       $element['#attached']['library'][] = array('system', 'ui.sortable');
     }
+    
   }
   
   if (isset($element['#select2_processed'])) {
@@ -325,6 +326,20 @@ function select2_select_element_process($element, &$form_state) {
     unset($element['#options']);
   }
   
+  if (isset($element['#field_name']) && $element['#field_name']) {
+    $field_info = field_info_field($element['#field_name']);
+    
+    if ($field_info['cardinality'] != 1) {
+      $element['#select2']['multiple'] = TRUE;
+      $element['#select2']['jqui_sortable']  = TRUE;
+      
+      if ($field_info['cardinality'] > 1) {
+        $element['#select2']['maximumSelectionSize']  = $field_info['cardinality'];
+      }
+    }
+    
+  }
+  
   _select2_set_element_settings($element_id, $element['#select2']);
   $element['#select2_processed'] = TRUE;
   return $element;
@@ -392,8 +407,6 @@ function select2_process_textfield($element, &$form_state) {
     if ($field_info['cardinality'] != 1) {
       $element['#select2']['tokenSeparators'] = array(',');
       $element['#select2']['separator'] = ',';
-      $element['#select2']['multiple'] = TRUE;
-      $element['#select2']['jqui_sortable']  = TRUE;
 
       $element['#select2']['initSelection'] = 'taxonomy_term_ref_ac_s2_init_selecttion';
       
@@ -410,6 +423,16 @@ function select2_process_textfield($element, &$form_state) {
                                  . t('For change order of terms, you can drag and drop them into desired position.') 
                                  . '<br>'
                                  . t('Symbol "," will automatically separate the inputted terms.');
+    }
+    
+  }
+  
+  if (isset($field_info) && $field_info['cardinality'] != 1) {
+    $element['#select2']['multiple'] = TRUE;
+    $element['#select2']['jqui_sortable']  = TRUE;
+    
+    if ($field_info['cardinality'] > 1) {
+      $element['#select2']['maximumSelectionSize']  = $field_info['cardinality'];
     }
     
   }
@@ -482,14 +505,23 @@ function select2_field_widget_info_alter(&$info) {
  */
 function select2_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
   
-  if ($form['#instance']['widget']['type'] != 'options_select') return;
+  switch ($form['#instance']['widget']['type']) {
+    case 'options_select':
+      _select2_form_field_ui_field_options_select_edit_form_alter($form, $form_state, $form_id);
+      break;
+  }
+  
+}
+
+
+function _select2_form_field_ui_field_options_select_edit_form_alter(&$form, &$form_state, $form_id) {
   
   $field = $form['#field'];
   
   $form['instance']['settings']['select2_integration'] = array(
       '#type'    => 'fieldset',
       '#title'   => 'Select2 integration settings'
-      
+  
   );
   
   $use_select2 = isset($form['#instance']['settings']['use_select2']) ? $form['#instance']['settings']['use_select2'] : ( isset($form['#instance']['settings']['select2_integration']['use_select2']) ? $form['#instance']['settings']['select2_integration']['use_select2'] : FALSE);
@@ -514,7 +546,7 @@ function select2_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form
             ),
         ),
     );
-    
+  
     $form['instance']['settings']['select2_integration']['show_voc_terms_page_link'] = array(
         '#type'          => 'checkbox',
         '#title'         => t('Show link to vocabulary terms list page'),
@@ -526,7 +558,7 @@ function select2_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form
             ),
         ),
     );
-    
+  
   }
   
   //placeholder
@@ -590,7 +622,11 @@ function select2_field_widget_form_alter(&$element, &$form_state, $context) {
       
       $element['#type'] = 'select2_hidden';
       
+      $element['#value_callback'] = 'select_2_hidden_value_callback';
+      
       $element['#select2']['taxonomy_vocabulary'] = $context['field']['settings']['allowed_values'][0]['vocabulary'];
+      
+      $element['#select2']['minimumResultsForSearch'] = 0;
       
       $element['#element_validate'] = array_merge(array('select2_taxonomy_term_reference_validate'), $element['#element_validate']);
       
@@ -620,9 +656,9 @@ function select2_field_widget_form_alter(&$element, &$form_state, $context) {
 
 function select2_taxonomy_term_reference_validate(&$element, &$form_state) {
   
-  $values = is_string($element['#value']) ? explode(SELECT2_VALUES_SEPARATOR, $element['#value']) : NULL;
+  $values_to_set = array();
   
-  $values_to_set = is_array($element['#value']) ? $element['#value'] : array();
+  $values = is_array($element['#value']) ? $element['#value'] : array();
   
   $v_mname = isset($element['#select2']['taxonomy_vocabulary']) ? $element['#select2']['taxonomy_vocabulary'] : '';
     
@@ -655,8 +691,10 @@ function select2_taxonomy_term_reference_validate(&$element, &$form_state) {
           $values_to_set[] = $tid;
           continue;
         }
-      }
+      } 
     
+      if ($form_state['rebuild_info']) continue;
+      
       //trying to add new term
       
       //get max weight of terms in current voc for adding new term at the end of list
@@ -736,10 +774,13 @@ function select_2_hidden_value_callback($element, $input = FALSE, $form_state = 
     return isset($element['#default_value']) ? $element['#default_value'] : 0;
   } 
   elseif (isset($element['#select2']['separator'])) {
-      $result = is_string($input) ? explode($element['#select2']['separator'], $input) : $input;
-      return $result;
+    $result = is_string($input) ? explode($element['#select2']['separator'], $input) : $input;
+  } 
+  else {
+    $result = array($input);
   }
   
+  return $result;
 }
 
 
@@ -758,7 +799,7 @@ function _select2_post_load_library_callback(&$library, $version, $variant) {
     return;
   }
   
-  drupal_add_js(SELECT2_MODULE_PATH . '/js/select2_integration.js');
+  drupal_add_js(SELECT2_MODULE_PATH . '/js/select2_integration.js', array('weight' => 1000));
   drupal_add_css(SELECT2_MODULE_PATH . '/css/select2_integration.css');
   
   //load and define exclude lists
@@ -953,11 +994,11 @@ function _select2_set_element_settings($element_id, $settings) {
 
 function _select2_current_path_is_admin() {
   
-  $result = &drupal_static(__FUNCTION__, null);
+  $result = &drupal_static(__FUNCTION__, NULL);
   
   if ($result !== NULL) return $result;
   
-  if (path_is_admin(current_path())){
+  if (path_is_admin(current_path())) {
     $result = TRUE;
     return TRUE;
   }
@@ -984,7 +1025,7 @@ function _select2_current_path_is_admin() {
     
     $patterns = path_get_admin_paths();
     
-    if(path_is_admin($referrer_url_path)) {
+    if (path_is_admin($referrer_url_path)) {
       $result = TRUE;
       return TRUE;
     }
