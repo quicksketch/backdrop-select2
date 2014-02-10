@@ -50,12 +50,20 @@
     	var def_values = $(element).select2('val');
         
         if (typeof(def_values) == 'string') {
-          callback({id: def_values, text: def_values});
+        	
+          var label = def_values;
+          label = label.replace(/{{;}}/g, ',').replace(/""/g, '"').quote_trim();
+        	
+          callback({id: def_values, text: label});
         } else if (typeof(def_values) == 'object') {
         	
         	data = [];
         	for (var i = 0; i < def_values.length; i++) {
-        		data.push({id: def_values[i], text: def_values[i]});
+        		
+        		var label = def_values[i];
+        		label = label.replace(/{{;}}/g, ',').replace(/""/g, '"').quote_trim();
+        		
+        		data.push({id: def_values[i], text: label});
         	}
         	callback(data);
         }
@@ -91,6 +99,17 @@
 				}
 			}
 		};
+	};
+	
+	String.prototype.quote_trim = function(){
+		
+		var expr = /^".*?"$/g;
+		
+		if (expr.test(this)) {
+		  return this.replace(/"$/,'').replace(/^"/,'');
+		}
+		
+		return this;
 	};
 	
 	$.fn.atachSelect2 = function() {
@@ -131,9 +150,7 @@
 			  
 			  var options = {
 				//'containerCssClass': '',
-				'adaptContainerCssClass': function(clazz){},
-				//'dropdownAutoWidth': true,
-				//'width': 'copy',
+				'adaptContainerCssClass': function(clazz){}
 			  };
 			  
 			  //merging default setting with defined in config defaults
@@ -263,6 +280,19 @@
 				  $element_select2_attach_result = false;
 				  
 				  try {
+					 
+					 if (typeof(options.comma_replacement) != 'undefined') {
+						 
+						 var cur_val = "" + $element.val();
+						 
+						 cur_val = cur_val.replace(/".*?"/g, function(match){
+					       return match.replace(/,/g, '{{;}}');
+					     });
+						 
+						 $element.val(cur_val);
+						 
+					 }
+					  
 					 $element.select2(options);
 					 
 					 if ($.fn.sortable != undefined && 
@@ -277,7 +307,7 @@
 					 }
 					 
 				  } catch (e) {
-					  console.error(t('Error while attaching select2 plugin to element. Error: ' + e ));
+					  console.error('Error while attaching select2 plugin to element. Error: ' + e);
 				  }
 				  
 			  }

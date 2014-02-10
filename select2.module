@@ -19,6 +19,7 @@ define('SELECT2_MIN_PLUGIN_VERSION', '3.4.5');
 define('SELECT2_PLUGIN_PATH', 'sites/all/libraries/select2');
 define('SELECT2_MODULE_PATH', drupal_get_path('module', 'select2'));
 define('SELECT2_VALUES_SEPARATOR', '¶');
+define('SELECT2_COMMA_REPLACEMENT', '{;}');
 
 function select2_menu() {
   
@@ -395,18 +396,10 @@ function select2_process_textfield($element, &$form_state) {
     // need to add custom properties for taxonomy term reference field
     $element['#select2']['taxonomy_ref_ac_allowed'] = TRUE;
     
-//     if (isset($element['#entity_type']) &&
-//         isset($element['#field_name']) &&
-//         isset($element['#bundle'])) {
-      
-//       $field_instance = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
-      
-//     }
-//    code above will be need later
-    
     if ($field_info['cardinality'] != 1) {
       $element['#select2']['tokenSeparators'] = array(',');
       $element['#select2']['separator'] = ',';
+      $element['#select2']['comma_replacement'] = SELECT2_COMMA_REPLACEMENT;
 
       $element['#select2']['initSelection'] = 'taxonomy_term_ref_ac_s2_init_selecttion';
       
@@ -423,6 +416,27 @@ function select2_process_textfield($element, &$form_state) {
                                  . t('For change order of terms, you can drag and drop them into desired position.') 
                                  . '<br>'
                                  . t('Symbol "," will automatically separate the inputted terms.');
+    }
+    
+  }
+  
+  if (isset($element['#entity_type']) &&
+      isset($element['#field_name']) &&
+      isset($element['#bundle'])) {
+
+    $field_instance = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
+
+    if (strstr($field_instance['widget']['type'], '_tags') !== FALSE) {
+      $element['#select2']['separator'] = ',';
+      $element['#select2']['tokenSeparators'] = array(',');
+      $element['#select2']['initSelection'] = 'taxonomy_term_ref_ac_s2_init_selecttion';
+      
+      $element['#select2']['initSelection'] = 'taxonomy_term_ref_ac_s2_init_selecttion';
+      
+      if ($element['#value']) {
+        $element['#select2']['comma_replacement'] = SELECT2_COMMA_REPLACEMENT;
+      }
+      
     }
     
   }
@@ -452,6 +466,13 @@ function select2_process_textfield($element, &$form_state) {
   _select2_set_element_settings($element_id, $element['#select2']);
   
   $element['#autocomplete_path'] = FALSE;
+  
+  if (isset($element['#select2']['comma_replacement'])) {
+    
+    if (!isset($element['#element_validate'])) $element['#element_validate'] = array();
+    
+    array_unshift($element['#element_validate'], '_select2_comma_replacement_validate');
+  }
   
   return $element;
 }
@@ -509,6 +530,13 @@ function select2_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form
     case 'options_select':
       _select2_form_field_ui_field_options_select_edit_form_alter($form, $form_state, $form_id);
       break;
+    
+    //taxonomy_autocomplete
+    
+    //entityreference_autocomplete
+    
+    //entityreference_autocomplete_tags
+      
   }
   
 }
@@ -654,6 +682,17 @@ function select2_field_widget_form_alter(&$element, &$form_state, $context) {
 }
 
 
+function _select2_comma_replacement_validate(&$element, &$form_state) {
+  
+  $value = $element['#value'];
+  
+  $value = str_replace('{{;}}', ',', $value);
+  
+  form_set_value($element, $value, $form_state);
+  
+}
+
+
 function select2_taxonomy_term_reference_validate(&$element, &$form_state) {
   
   $values_to_set = array();
@@ -779,6 +818,10 @@ function select_2_hidden_value_callback($element, $input = FALSE, $form_state = 
   else {
     $result = array($input);
   }
+  
+//   foreach ($result as $key => $value) {
+//     $result[$key] = str_replace(SELECT2_COMMA_REPLACEMENT, ',', $value);
+//   }
   
   return $result;
 }
