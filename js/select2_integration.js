@@ -6,8 +6,6 @@
  
 (function ($) {
 
-	Drupal.select2functions = {};
-	
 	Drupal.select2functions.formatSelection_taxonomy_terms_item = function(term) {
 		
 		if (term.hover_title != undefined) {
@@ -150,7 +148,8 @@
 			  
 			  var options = {
 				//'containerCssClass': '',
-				'adaptContainerCssClass': function(clazz){}
+				'adaptContainerCssClass': function(clazz){},
+				'width': 'element',
 			  };
 			  
 			  //merging default setting with defined in config defaults

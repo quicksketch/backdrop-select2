@@ -331,7 +331,7 @@ function select2_select_element_process($element, &$form_state) {
     $field_info = field_info_field($element['#field_name']);
     
     if ($field_info['cardinality'] != 1) {
-      $element['#select2']['multiple'] = TRUE;
+      if ($element['#type'] != 'select') $element['#select2']['multiple'] = TRUE;
       $element['#select2']['jqui_sortable']  = TRUE;
       
       if ($field_info['cardinality'] > 1) {
@@ -382,7 +382,9 @@ function select2_process_textfield($element, &$form_state) {
     $element['#ajax_processed'] = TRUE;
   }
   
-  $element['#select2'] = array(
+  if (!isset($element['#select2'])) $element['#select2'] = array();
+  
+	$s2_ac_defaults = array(
     'autocomplete_path'  => $element['#autocomplete_path'],
     'minimumInputLength' => 1,
     'formatResult'       => 'ac_format_result',
@@ -392,16 +394,21 @@ function select2_process_textfield($element, &$form_state) {
     'containerCssClass'  => 'ac-replaced-by-select2'
   );
   
+	if (!isset($element['#required']) || !$element['#required']) {
+	  $s2_ac_defaults['allowClear'] = TRUE;
+	  $s2_ac_defaults['placeholder'] = t('Start search');
+	}
+	
   if (isset($field_info) && $field_info['type'] == 'taxonomy_term_reference') {
     // need to add custom properties for taxonomy term reference field
-    $element['#select2']['taxonomy_ref_ac_allowed'] = TRUE;
+    $s2_ac_defaults['taxonomy_ref_ac_allowed'] = TRUE;
     
     if ($field_info['cardinality'] != 1) {
-      $element['#select2']['tokenSeparators'] = array(',');
-      $element['#select2']['separator'] = ',';
-      $element['#select2']['comma_replacement'] = SELECT2_COMMA_REPLACEMENT;
+      $s2_ac_defaults['tokenSeparators'] = array(',');
+      $s2_ac_defaults['separator'] = ',';
+      $s2_ac_defaults['comma_replacement'] = SELECT2_COMMA_REPLACEMENT;
 
-      $element['#select2']['initSelection'] = 'taxonomy_term_ref_ac_s2_init_selecttion';
+      $s2_ac_defaults['initSelection'] = 'taxonomy_term_ref_ac_s2_init_selecttion';
       
       $description_prefix = '';
       
@@ -427,34 +434,29 @@ function select2_process_textfield($element, &$form_state) {
     $field_instance = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
 
     if (strstr($field_instance['widget']['type'], '_tags') !== FALSE) {
-      $element['#select2']['separator'] = ',';
-      $element['#select2']['tokenSeparators'] = array(',');
-      $element['#select2']['initSelection'] = 'taxonomy_term_ref_ac_s2_init_selecttion';
+      $s2_ac_defaults['separator'] = ',';
+      $s2_ac_defaults['tokenSeparators'] = array(',');
+      $s2_ac_defaults['initSelection'] = 'taxonomy_term_ref_ac_s2_init_selecttion';
       
-      $element['#select2']['initSelection'] = 'taxonomy_term_ref_ac_s2_init_selecttion';
+      $s2_ac_defaults['initSelection'] = 'taxonomy_term_ref_ac_s2_init_selecttion';
       
       if ($element['#value']) {
-        $element['#select2']['comma_replacement'] = SELECT2_COMMA_REPLACEMENT;
+        $s2_ac_defaults['comma_replacement'] = SELECT2_COMMA_REPLACEMENT;
       }
-      
     }
-    
   }
   
   if (isset($field_info) && $field_info['cardinality'] != 1) {
-    $element['#select2']['multiple'] = TRUE;
-    $element['#select2']['jqui_sortable']  = TRUE;
+    $s2_ac_defaults['multiple'] = TRUE;
+    $s2_ac_defaults['jqui_sortable']  = TRUE;
     
     if ($field_info['cardinality'] > 1) {
-      $element['#select2']['maximumSelectionSize']  = $field_info['cardinality'];
+      $s2_ac_defaults['maximumSelectionSize']  = $field_info['cardinality'];
     }
     
   }
   
-  if (!isset($element['#required']) || !$element['#required']) {
-    $element['#select2']['allowClear'] = TRUE;
-    $element['#select2']['placeholder'] = t('Start search');
-  }
+  $element['#select2'] = array_merge($s2_ac_defaults, $element['#select2']);
   
   $element['#attached']['libraries_load'][] = array('select2');
   $element['#select_2_processed'] = TRUE;
@@ -531,7 +533,9 @@ function select2_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form
       _select2_form_field_ui_field_options_select_edit_form_alter($form, $form_state, $form_id);
       break;
     
-    //taxonomy_autocomplete
+    case 'taxonomy_autocomplete':
+      _select2_form_field_ui_field_ac_edit_form_alter($form, $form_state, $form_id);
+      break;
     
     //entityreference_autocomplete
     
@@ -542,14 +546,15 @@ function select2_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form
 }
 
 
-function _select2_form_field_ui_field_options_select_edit_form_alter(&$form, &$form_state, $form_id) {
+function _select2_form_field_ui_field_base_edit_form_alter(&$form, &$form_state, $form_id) {
   
   $field = $form['#field'];
   
   $form['instance']['settings']['select2_integration'] = array(
-      '#type'    => 'fieldset',
-      '#title'   => 'Select2 integration settings'
-  
+      '#type'        => 'fieldset',
+      '#title'       => 'Select2 integration settings',
+      '#collapsible' => TRUE,
+      '#collapsed'   => TRUE,
   );
   
   $use_select2 = isset($form['#instance']['settings']['use_select2']) ? $form['#instance']['settings']['use_select2'] : ( isset($form['#instance']['settings']['select2_integration']['use_select2']) ? $form['#instance']['settings']['select2_integration']['use_select2'] : FALSE);
@@ -560,6 +565,53 @@ function _select2_form_field_ui_field_options_select_edit_form_alter(&$form, &$f
       '#default_value' =>  $use_select2,
       '#weight'        => -10,
   );
+
+  $form['instance']['settings']['select2_integration']['styling'] = array(
+      '#type'        => 'fieldset',
+      '#title'       => 'Options',
+      '#collapsible' => TRUE,
+      '#collapsed'   => TRUE,
+      '#states' => array(
+          'invisible' => array(
+              ':input[name="instance[settings][select2_integration][use_select2]"]' => array('checked' => FALSE),
+          ),
+      ),
+  );
+  
+  //placeholder
+  $form['instance']['settings']['select2_integration']['styling']['placeholder'] = array(
+      '#type'          => 'textfield',
+      '#title'         => t('Placeholder text'),
+      '#default_value' => isset($form['#instance']['settings']['select2_integration']['styling']['placeholder']) ? $form['#instance']['settings']['select2_integration']['styling']['placeholder'] : FALSE,
+      '#weight'        => 0,
+      '#return_value' => TRUE,
+  );
+  
+  $form['instance']['settings']['select2_integration']['styling']['dropdownAutoWidth'] = array(
+      '#type'          => 'checkbox',
+      '#title'         => t('Dropdown auto width'),
+      '#default_value' => isset($form['#instance']['settings']['select2_integration']['styling']['dropdownAutoWidth']) ? $form['#instance']['settings']['select2_integration']['styling']['dropdownAutoWidth'] : FALSE,
+      '#weight'        => 10,
+      '#return_value' => TRUE,
+  );
+  
+}
+
+
+function _select2_form_field_ui_field_ac_edit_form_alter(&$form, &$form_state, $form_id) {
+  
+  $field = $form['#field'];
+  
+  _select2_form_field_ui_field_base_edit_form_alter($form, $form_state, $form_id);
+  
+}
+
+
+function _select2_form_field_ui_field_options_select_edit_form_alter(&$form, &$form_state, $form_id) {
+  
+  $field = $form['#field'];
+  
+  _select2_form_field_ui_field_base_edit_form_alter($form, $form_state, $form_id);
   
   if ($field['type'] == 'taxonomy_term_reference') {
     // for taxonomy term reference fields alow "add terms on fly" future
@@ -589,33 +641,6 @@ function _select2_form_field_ui_field_options_select_edit_form_alter(&$form, &$f
   
   }
   
-  //placeholder
-  $form['instance']['settings']['select2_integration']['styling']['placeholder'] = array(
-      '#type'          => 'textfield',
-      '#title'         => t('Placeholder text'),
-      '#default_value' => isset($form['#instance']['settings']['select2_integration']['styling']['placeholder']) ? $form['#instance']['settings']['select2_integration']['styling']['placeholder'] : FALSE,
-      '#weight'        => 0,
-      '#states' => array(
-          'invisible' => array(
-              ':input[name="instance[settings][select2_integration][use_select2]"]' => array('checked' => FALSE),
-          ),
-      ),
-      '#return_value' => TRUE,
-  );
-  
-  $form['instance']['settings']['select2_integration']['styling']['dropdownAutoWidth'] = array(
-      '#type'          => 'checkbox',
-      '#title'         => t('Dropdown auto width'),
-      '#default_value' => isset($form['#instance']['settings']['select2_integration']['styling']['dropdownAutoWidth']) ? $form['#instance']['settings']['select2_integration']['styling']['dropdownAutoWidth'] : FALSE,
-      '#weight'        => 10,
-      '#states' => array(
-          'invisible' => array(
-              ':input[name="instance[settings][select2_integration][use_select2]"]' => array('checked' => FALSE),
-          ),
-      ),
-      '#return_value' => TRUE,
-  );
-  
 }
 
 
@@ -635,50 +660,48 @@ function select2_field_widget_form_alter(&$element, &$form_state, $context) {
     ),
   );
   
-  if (isset($element['#type']) && $element['#type'] == 'select'
-      && $context['instance']['settings']['select2_integration']['use_select2']) {
+  if (!$context['instance']['settings']['select2_integration']['use_select2']) return;
+  
+  $settings = $context['instance']['settings']['select2_integration'];
+  
+  $styling_settings = isset($settings['styling']) ? $settings['styling'] : array();
+  
+  $settings = array_merge($settings, $styling_settings);
+  
+  $element['#select2'] = $settings;
+  
+  if (isset($settings['allow_add_onfly']) && $settings['allow_add_onfly']) {
     
-    $settings = $context['instance']['settings']['select2_integration'];
+    $element['#type'] = 'select2_hidden';
     
-    $styling_settings = isset($settings['styling']) ? $settings['styling'] : array();
+    $element['#value_callback'] = 'select_2_hidden_value_callback';
     
-    $settings = array_merge($settings, $styling_settings);
+    $element['#select2']['taxonomy_vocabulary'] = $context['field']['settings']['allowed_values'][0]['vocabulary'];
     
-    $element['#select2'] = $settings;
+    $element['#select2']['minimumResultsForSearch'] = 0;
     
-    if (isset($settings['allow_add_onfly']) && $settings['allow_add_onfly']) {
-      
-      $element['#type'] = 'select2_hidden';
-      
-      $element['#value_callback'] = 'select_2_hidden_value_callback';
-      
-      $element['#select2']['taxonomy_vocabulary'] = $context['field']['settings']['allowed_values'][0]['vocabulary'];
-      
-      $element['#select2']['minimumResultsForSearch'] = 0;
-      
-      $element['#element_validate'] = array_merge(array('select2_taxonomy_term_reference_validate'), $element['#element_validate']);
-      
-      $descrition = t('This element supports "Add terms on fly" function.<br>You can select terms from defined terms list, or add your new term(s), by typing name of term(s) manually, press Enter key after typing new term name, for adding it to selected items list. <br><b>New term(s) will be saved when form will be submitted</b>.');
-      
-      $terms_edit_page_link = '<br>' . l(t('Edit vocabulary terms'), 'admin/structure/taxonomy/' . $element['#select2']['taxonomy_vocabulary'], array('attributes' => array('target' => '_blank', 'class' => array('taxonomy_voc_terms_page_link'))));
-      
-      if (isset($settings['show_voc_terms_page_link']) && $settings['show_voc_terms_page_link']) {
-        $descrition .= $terms_edit_page_link;
-      } 
-      elseif (!isset($settings['show_voc_terms_page_link'])) {
-        $descrition .= $terms_edit_page_link;
-      }
-      
-      $element['#description'] = (isset($element['#description']) ? $element['#description'] . '<br/>' : '') . $descrition;
-      
-      if (isset($element['#multiple']) && $element['#multiple']) {
-        $element['#select2']['multiple'] = TRUE;
-        $element['#select2']['separator'] = SELECT2_VALUES_SEPARATOR;
-      }
-      
+    $element['#element_validate'] = array_merge(array('select2_taxonomy_term_reference_validate'), $element['#element_validate']);
+    
+    $descrition = t('This element supports "Add terms on fly" function.<br>You can select terms from defined terms list, or add your new term(s), by typing name of term(s) manually, press Enter key after typing new term name, for adding it to selected items list. <br><b>New term(s) will be saved when form will be submitted</b>.');
+    
+    $terms_edit_page_link = '<br>' . l(t('Edit vocabulary terms'), 'admin/structure/taxonomy/' . $element['#select2']['taxonomy_vocabulary'], array('attributes' => array('target' => '_blank', 'class' => array('taxonomy_voc_terms_page_link'))));
+    
+    if (isset($settings['show_voc_terms_page_link']) && $settings['show_voc_terms_page_link']) {
+      $descrition .= $terms_edit_page_link;
+    } 
+    elseif (!isset($settings['show_voc_terms_page_link'])) {
+      $descrition .= $terms_edit_page_link;
+    }
+    
+    $element['#description'] = (isset($element['#description']) ? $element['#description'] . '<br/>' : '') . $descrition;
+    
+    if (isset($element['#multiple']) && $element['#multiple']) {
+      $element['#select2']['multiple'] = TRUE;
+      $element['#select2']['separator'] = SELECT2_VALUES_SEPARATOR;
     }
     
   }
+    
 }
 
 
@@ -810,18 +833,14 @@ function select2_taxonomy_volabilaries_to_rebuild_options() {
 function select_2_hidden_value_callback($element, $input = FALSE, $form_state = array()) {
   
   if ($input === FALSE) {
-    return isset($element['#default_value']) ? $element['#default_value'] : 0;
-  } 
-  elseif (isset($element['#select2']['separator'])) {
-    $result = is_string($input) ? explode($element['#select2']['separator'], $input) : $input;
+    
+    $value = isset($element['#default_value']) ? $element['#default_value'] : 0;
+    
+    $result = is_string($value) ? explode(isset($element['#select2']['separator']) ? $element['#select2']['separator'] : SELECT2_VALUES_SEPARATOR, $value) : $value;
   } 
   else {
-    $result = array($input);
-  }
-  
-//   foreach ($result as $key => $value) {
-//     $result[$key] = str_replace(SELECT2_COMMA_REPLACEMENT, ',', $value);
-//   }
+    $result = is_string($input) ? explode(isset($element['#select2']['separator']) ? $element['#select2']['separator'] : SELECT2_VALUES_SEPARATOR, $input) : $input;
+  } 
   
   return $result;
 }
@@ -842,6 +861,7 @@ function _select2_post_load_library_callback(&$library, $version, $variant) {
     return;
   }
   
+  drupal_add_js(SELECT2_MODULE_PATH . '/js/select2.preinit.js', array('weight' => -1000));
   drupal_add_js(SELECT2_MODULE_PATH . '/js/select2_integration.js', array('weight' => 1000));
   drupal_add_css(SELECT2_MODULE_PATH . '/css/select2_integration.css');
   
@@ -985,7 +1005,7 @@ function _select2_default_settings() {
       'separator'               => SELECT2_VALUES_SEPARATOR,
       'jqui_sortable'           => FALSE,
       'dropdownAutoWidth'       => TRUE,
-      'width'                   => 'copy',
+      'width'                   => 'element',
       'containerCssClass'       => '',
       'minimumResultsForSearch' => variable_get('select2_min_options_count_for_search', 15),
   );

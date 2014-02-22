@@ -49,17 +49,16 @@
 }
 .container-inline .select2-container,
 .container-inline .select2-container .select2-choice,
-div.image-style-new div.select2-container
+div.image-style-new div.select2-container,
+.webform-container-inline div.select2-container
 {
 	display: inline-block;
 }
-div.image-style-new div.select2-display-none 
-{
-  display: none;
-}
+div.image-style-new div.select2-display-none,
+.webform-container-inline div.select2-display-none,
 .container-inline div.select2-display-none
 {
-	display: none;
+  display: none;
 }
 
 /**/
