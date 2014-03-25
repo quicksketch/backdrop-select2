@@ -224,9 +224,7 @@
 									 options.placeholder = $('option[value=""]', $element).text();
 								 }
 								 
-								 $('option[value=""]', $element).remove();
-								 var $epmty_option = $('<option></option>');
-								 $epmty_option.prependTo($element);
+								 $('option[value=""]', $element).html('').removeAttr('selected');
 								 
 							 }
 							  
