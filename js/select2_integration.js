@@ -292,16 +292,6 @@
 					  
 					 $element.select2(options);
 					 
-					 $element.on('select2-close', function(){
-						  
-						  $scrollObj = $('.select2-drop ul');
-						  
-						  if (!$('body').hasClass('cbox-body')) {
-							  $('.select2-drop, #select2-drop-mask').remove();
-						  }
-						  
-					 });
-					 
 					 if ($.fn.sortable != undefined && 
 					   options.jqui_sortable != undefined && 
 					   options.jqui_sortable) {
