@@ -28,7 +28,7 @@ function select2_menu() {
     'description'      => 'Select2 module settings',
     'page callback'    => 'drupal_get_form',
     'page arguments'   => array('select2_settings_form'),
-    'access arguments' => array('access administration pages'),
+    'access arguments' => array('administer select2'),
     'file'             => 'pages/admin.inc.php',
   );
   
@@ -49,6 +49,21 @@ function select2_theme() {
       'select2_hidden' => array(
         'render element' => 'element',
       )
+  );
+}
+
+/**
+ * Implements hook_permission
+ *
+ * Adds a new permission limiting which users can change Select2 integration
+ * settings.
+ */
+function select2_permission() {
+  return array(
+    'administer select2' => array(
+      'title' => t('Administer Select2 settings'),
+      'description' => t('Change where and how Select2 is included on a page.'),
+    ),
   );
 }
 
