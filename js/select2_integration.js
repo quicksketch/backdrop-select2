@@ -292,6 +292,12 @@
 					  
 					 $element.select2(options);
 					 
+					 // need fix select2 container width
+					 if (options.width != undefined && (options.width == 'element' || options.width == 'resolve')) {
+						 var cur_width = $element.select2("container").width();
+						 $element.select2("container").width(cur_width + 34);
+					 }
+					 
 					 if ($.fn.sortable != undefined && 
 					   options.jqui_sortable != undefined && 
 					   options.jqui_sortable) {
