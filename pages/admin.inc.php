@@ -72,5 +72,27 @@ function select2_settings_form($form, &$form_state) {
       '#description'   => t(' Enter one selector per line.'),
   );
   
-  return system_settings_form($form);
+  $form['select2_update_settings_by_ajax'] = array(
+  	'#title'          => t('Updtae setting by ajax'),
+    '#description'    => t('This option can be used when cache enabled for pages. <b>After enabling/disabling this option your current cache will be cleared.</b>.'),
+    '#type'           => 'checkbox',
+    '#default_value'  => variable_get('select2_update_settings_by_ajax', FALSE),
+  );
+  
+  $form = system_settings_form($form);
+  
+  $form['#submit'][] = 'select2_settings_form_submit';
+  
+  return $form;
+}
+
+function select2_settings_form_submit($form, &$form_state) {
+	
+  if ($form['select2_update_settings_by_ajax']['#default_value'] != $form_state['values']['select2_update_settings_by_ajax']) {
+    
+    drupal_flush_all_caches();
+    drupal_set_message(t('Caches cleared.'));
+    
+  }
+  
 }

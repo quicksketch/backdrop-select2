@@ -32,6 +32,16 @@ function select2_menu() {
     'file'             => 'pages/admin.inc.php',
   );
   
+  $items['select2/ajax/get_settings'] = array(
+    'title' => 'Select2',
+    'page callback' => 'select2_get_settings_ajax',
+    'delivery callback' => 'ajax_deliver',
+    'access callback' => TRUE,
+    'description' => 'Ajax callback for getting select2 settings.',
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/ajax.inc',
+  );
+  
   return $items;
 }
 
@@ -870,11 +880,23 @@ function select_2_hidden_value_callback($element, $input = FALSE, $form_state = 
  */
 function _select2_post_load_library_callback(&$library, $version, $variant) {
   
-  global $language;
+  global $language, $base_root;
   
   if (!select2_check_jq_front_end_version() || !select2_check_jq_admin_mode_version()) {
     return;
   }
+  
+  $settinings_updated_flag = '';
+  
+  if (!variable_get('select2_update_settings_by_ajax', FALSE)) {
+  	
+    $settinings_updated_flag = 'Drupal.Select2.settings_updated = true;';
+    
+  }
+  
+  $init_inline_script = '(function ($) {Drupal.Select2 = {base_root:"' . $base_root . '/"}; ' . $settinings_updated_flag .' })(jQuery)';
+  
+  drupal_add_js($init_inline_script, array('type' => 'inline', 'weight' => -1100));
   
   drupal_add_js(SELECT2_MODULE_PATH . '/js/select2.preinit.js', array('weight' => -1000));
   drupal_add_js(SELECT2_MODULE_PATH . '/js/select2_integration.js', array('weight' => 1000));
@@ -909,52 +931,7 @@ function _select2_post_load_library_callback(&$library, $version, $variant) {
     'elements' => array(),
   )), 'setting');
   
-  if (variable_get('select2_excluded_ids', '')) {
-    
-    $ids = explode("\r\n", variable_get('select2_excluded_ids', ''));
-    
-    $ids_values = array();
-    
-    $ids_reg_exs = array();
-    
-    foreach ($ids as $id) {
-      if (preg_match('/^\#(?<id_reg_ex>[0-9a-zA-Z-_]*)\#$/', $id, $match)) {
-        $ids_reg_exs[] = $match['id_reg_ex'];
-      } 
-      else {
-        $ids_values[] = $id;
-      }
-    }
-    
-    drupal_add_js(array('select_2' => array(
-      'excludes' => array(
-        'by_id' => array(
-          'values' => $ids_values,
-          'reg_exs' => $ids_reg_exs,
-        ),
-      ),
-    )), 'setting');
-  }
-  
-  if (variable_get('select2_excluded_cleasses', '')) {
-    $classes = explode("\r\n", variable_get('select2_excluded_cleasses', ''));
-    
-    drupal_add_js(array('select_2' => array(
-      'excludes' => array(
-        'by_class' => $classes,
-      ),
-    )), 'setting');
-  }
-  
-  if (variable_get('select2_excluded_selectors', '')) {
-    $selectors = explode("\r\n", variable_get('select2_excluded_selectors', ''));
-  
-    drupal_add_js(array('select_2' => array(
-      'excludes' => array(
-        'by_selectors' => $selectors,
-      ),
-    )), 'setting');
-  }
+  _select2_set_exuled_for_settings();
   
   $lang = '';
   
@@ -996,6 +973,7 @@ function select2_check_jq_front_end_version() {
   return FALSE;
 }
 
+
 function select2_check_jq_admin_mode_version() {
 
   if (variable_get('select2_use_for_all_select_elements_for_admin_pages')) {
@@ -1014,6 +992,73 @@ function select2_check_jq_admin_mode_version() {
   return TRUE;
 }
 
+
+// function select2_form_views_ui_config_item_form_alter(&$form, &$form_state, $form_id) {
+	
+//   if ($form['options']['value']['#type'] == 'select') {
+//   	$form['options']['expose']['use_select2_plugin'] = array(
+//   		'#type' => 'checkbox',
+//   	  '#title' => t('Use Select2 pluging for this filter field'),
+//   	  '#weight' => -100,
+//   	  '#description' => t('If checked, Select2 plugin will be used for this field.'),
+//   	);
+//   }
+  
+//   dpm($form);
+//   dpm($form_state['handler']);
+  
+// }
+
+function _select2_set_exuled_for_settings() {
+	
+  if (variable_get('select2_excluded_ids', '')) {
+  
+    $ids = explode("\r\n", variable_get('select2_excluded_ids', ''));
+  
+    $ids_values = array();
+  
+    $ids_reg_exs = array();
+  
+    foreach ($ids as $id) {
+      if (preg_match('/^\#(?<id_reg_ex>[0-9a-zA-Z-_]*)\#$/', $id, $match)) {
+        $ids_reg_exs[] = $match['id_reg_ex'];
+      }
+      else {
+        $ids_values[] = $id;
+      }
+    }
+  
+    drupal_add_js(array('select_2' => array(
+      'excludes' => array(
+        'by_id' => array(
+          'values' => $ids_values,
+          'reg_exs' => $ids_reg_exs,
+        ),
+      ),
+    )), 'setting');
+  }
+  
+  if (variable_get('select2_excluded_cleasses', '')) {
+    $classes = explode("\r\n", variable_get('select2_excluded_cleasses', ''));
+  
+    drupal_add_js(array('select_2' => array(
+      'excludes' => array(
+        'by_class' => $classes,
+      ),
+    )), 'setting');
+  }
+  
+  if (variable_get('select2_excluded_selectors', '')) {
+    $selectors = explode("\r\n", variable_get('select2_excluded_selectors', ''));
+  
+    drupal_add_js(array('select_2' => array(
+      'excludes' => array(
+        'by_selectors' => $selectors,
+      ),
+    )), 'setting');
+  }
+  
+}
 
 function _select2_default_settings() {
   return array(

@@ -292,10 +292,14 @@
 					  
 					 $element.select2(options);
 					 
-					 // need fix select2 container width
-					 if (options.width != undefined && (options.width == 'element' || options.width == 'resolve')) {
+					// need fix select2 container width
+					 if ($element.select2("container").width() > 0 
+						 && options.width != undefined 
+						 && (options.width == 'element' || options.width == 'resolve')) {
+						 
 						 var cur_width = $element.select2("container").width();
 						 $element.select2("container").width(cur_width + 34);
+						 
 					 }
 					 
 					 if ($.fn.sortable != undefined && 
@@ -337,6 +341,22 @@
 		  }
 	});
 	
+	_select2_process_elements = function(){
+		if(Drupal.settings.select_2.excludes.by_selectors.length > 0) {
+			  for (i = 0; i < Drupal.settings.select_2.excludes.by_selectors.length; ++i) {
+				  $(Drupal.settings.select_2.excludes.by_selectors[i]).addClass('select2-excluded');
+			  }
+		  }
+		  
+		  $("select.use-select-2, input.use-select-2").once('select2').atachSelect2();
+		  
+		  // atach select2 to all other selects (taths processed without Forms API) if needed
+		  if (Drupal.settings.select_2.process_all_selects_on_page) {
+			  $('select').once('select2').atachSelect2();
+		  }
+		  //
+	};
+	
 	Drupal.behaviors.select2_integration = {
 		  attach: function (context) {
 			  
@@ -356,19 +376,26 @@
 					  return false;
 				  });
 				  
-				  if(Drupal.settings.select_2.excludes.by_selectors.length > 0) {
-					  for (i = 0; i < Drupal.settings.select_2.excludes.by_selectors.length; ++i) {
-						  $(Drupal.settings.select_2.excludes.by_selectors[i]).addClass('select2-excluded');
+				  if (Drupal.Select2.settings_updated) {
+					  
+					  if (Drupal.Select2.current_exludes != false) {
+						  Drupal.settings.select_2.excludes = Drupal.Select2.current_exludes;
 					  }
+					  
+					  _select2_process_elements();  
+				  } else {
+					  
+					  $(document).bind('select2_settings_updated', function () {
+							
+						  if (Drupal.Select2.current_exludes != false) {
+							  Drupal.settings.select_2.excludes = Drupal.Select2.current_exludes;
+						  }
+						  
+						  _select2_process_elements();
+						  
+					  });
+					  
 				  }
-				  
-				  $("select.use-select-2, input.use-select-2").once('select2').atachSelect2();
-				  
-				  // atach select2 to all other selects (taths processed without Forms API) if needed
-				  if (Drupal.settings.select_2.process_all_selects_on_page) {
-					  $('select').once('select2').atachSelect2();
-				  }
-				  //
 				  
 			  }
 			  
