@@ -6,6 +6,10 @@
  
 (function ($) {
 
+	var jqversion = jQuery.fn.jquery;
+	  
+	var jqVersionSplited = jqversion.split('.');
+	
 	Drupal.select2functions.formatSelection_taxonomy_terms_item = function(term) {
 		
 		if (term.hover_title != undefined) {
@@ -348,6 +352,12 @@
 			  }
 		  }
 		  
+		  if (jqVersionSplited[1]*1 < 8 
+			  && ( $("select.use-select-2, input.use-select-2").lenght > 0 || (Drupal.settings.select_2.process_all_selects_on_page && $('select').lenght > 0))) {
+			  console.error('Error: ' + Drupal.t('jQuery 1.8.x or higher required for using "Select2 integration" module. Some of your forms element may be not working properly.'));
+			  return;
+		  }
+		
 		  $("select.use-select-2, input.use-select-2").once('select2').atachSelect2();
 		  
 		  // atach select2 to all other selects (taths processed without Forms API) if needed
@@ -359,15 +369,6 @@
 	
 	Drupal.behaviors.select2_integration = {
 		  attach: function (context) {
-			  
-			  var jqversion = jQuery.fn.jquery;
-			  
-			  var jqVersionSplited = jqversion.split('.');
-			  
-			  if(jqVersionSplited[1]*1 < 8){
-				  alert(Drupal.t('jQuery 1.8.x or higher required for using "Select2 integration" module. Some of your forms element may be not working properly.'));
-				  return;
-			  }
 			  
 			  if(typeof($.fn.select2) != 'undefined'){
 				  
