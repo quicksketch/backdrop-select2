@@ -49,7 +49,8 @@ function select2_preprocess_page($vars) {
   if (variable_get('select2_use_for_all_select_elements', FALSE)) {
     if (!_select2_current_path_is_admin() ||
     (_select2_current_path_is_admin() && variable_get('select2_use_for_all_select_elements_for_admin_pages', FALSE))) {
-      libraries_load('select2');
+      $variant = variable_get('select2_compression_type', 'minified');
+      libraries_load('select2', $variant);
     }
   }
 }
@@ -106,32 +107,23 @@ function select2_libraries_info() {
         ),
       ),
       'variants' => array(
-          'source' => array(
-              'files' => array(
-                  'js' => array(
-                      'select2.js',
-                  ),
-              ),
+        'source' => array(
+          'files' => array(
+            'js' => array('select2.js'),
+            'css' => array('select2.css'),
           ),
+        ),
+        'minified' => array(
+          'files' => array(
+            'js' => array('select2.min.js'),
+            'css' => array('select2.css'),
+          ),
+        ),
       ),
       'callbacks' => array(
           'post-load' => array('_select2_post_load_library_callback'),
       ),
   );
-  
-  $path = libraries_get_path('select2');
-  
-  $mnified_file = $path . '/select2.min.js';
-  
-  if (file_exists($mnified_file)) {
-    $libraries['select2']['variants']['minified'] = array(
-      'files' => array(
-        'js' => array(
-          'select2.min.js',
-        ),
-      ),
-    );
-  }
   
   return $libraries;
 }
@@ -294,7 +286,8 @@ function select2_select_element_process($element, &$form_state) {
   
   $element['#attributes']['class'][] = 'use-select-2';
   
-  $element['#attached']['libraries_load'][] = array('select2');
+  $variant = variable_get('select2_compression_type', 'minified');
+  $element['#attached']['libraries_load'][] = array('select2', $variant);
   
   $element_id = isset($element['#id']) ? $element['#id'] : ( isset($element['#attributes']['id']) ? $element['#attributes']['id'] : drupal_clean_css_identifier($element['#name']));
   
@@ -483,7 +476,10 @@ function select2_process_textfield($element, &$form_state) {
   
   $element['#select2'] = array_merge($s2_ac_defaults, $element['#select2']);
   
-  $element['#attached']['libraries_load'][] = array('select2');
+  
+  $variant = variable_get('select2_compression_type', 'minified');
+  $element['#attached']['libraries_load'][] = array('select2', $variant);
+  
   $element['#select_2_processed'] = TRUE;
   
   if (isset($element['#select2']['jqui_sortable']) && $element['#select2']['jqui_sortable']) {

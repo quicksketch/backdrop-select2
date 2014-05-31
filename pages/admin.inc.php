@@ -2,6 +2,16 @@
 
 function select2_settings_form($form, &$form_state) {
   
+  $form['select2_compression_type'] = array(
+    '#type' => 'radios',
+    '#title' => t('Choose Select2 compression level'),
+    '#options' => array(
+      'minified' => t('Production (Minified)'),
+      'source' => t('Development (Uncompressed Code)'),
+    ),
+    '#default_value' => variable_get('select2_compression_type', 'minified'),
+  );
+  
   $form['select2_use_for_all_select_elements'] = array(
     '#type'          => 'checkbox',
     '#title'         => t('Use for all select elements'),
