@@ -383,10 +383,29 @@ function select2_process_textfield($element, &$form_state) {
     return $element;
   }
   
+  if (isset($element['#field_name']) && $element['#field_name']) {
+    $field_info = field_info_field($element['#field_name']);
+    
+  }
+  
   if (!variable_get('select2_use_for_ac_elements', FALSE) ||
       !isset($element['#autocomplete_path']) || 
       !$element['#autocomplete_path'] || 
-      (isset($element['#select_2_processed']) && $element['#select_2_processed'])) return $element;
+      (isset($element['#select_2_processed']) && $element['#select_2_processed'])) {
+      	
+    // must check form field for entity field setting
+
+    if (isset($field_info) 
+        && (isset($element['#select2']) 
+            && isset($element['#select2']['use_select2']) 
+            && $element['#select2']['use_select2'])) {
+    }
+    else {
+      return $element;
+    }
+  } 
+  
+  
   
   $element_id = isset($element['#id']) ? $element['#id'] : ( isset($element['#attributes']['id']) ? $element['#attributes']['id'] : drupal_clean_css_identifier($element['#name']));
   
@@ -396,7 +415,7 @@ function select2_process_textfield($element, &$form_state) {
   
   $element['#attributes']['class'][] = 'use-select-2';
   
-  if (!$element['#ajax_processed']) {
+  if (!isset($element['#ajax_processed']) || !$element['#ajax_processed']) {
     $element['#ajax_processed'] = TRUE;
   }
   
@@ -484,6 +503,14 @@ function select2_process_textfield($element, &$form_state) {
   
   if (isset($element['#select2']['jqui_sortable']) && $element['#select2']['jqui_sortable']) {
     $element['#attached']['library'][] = array('system', 'ui.sortable');
+  }
+  
+  if ((isset($element['#select2']['allowClear']) && $element['#select2']['allowClear'])
+      && (!isset($element['#attributes']['placeholder'])
+          && (!isset($element['#select2']['placeholder']) || !$element['#select2']['placeholder']))) {
+             
+    $element['#select2']['placeholder'] = t('Type text for search');
+  
   }
   
   _select2_set_element_settings($element_id, $element['#select2']);
@@ -683,6 +710,10 @@ function select2_field_widget_form_alter(&$element, &$form_state, $context) {
   
   if (!$context['instance']['settings']['select2_integration']['use_select2']) return;
   
+  //     if (isset($element['#autocomplete_path'])) {
+  //       return select2_process_textfield($element, &$form_state);
+  //     }
+  
   $settings = $context['instance']['settings']['select2_integration'];
   
   $styling_settings = isset($settings['styling']) ? $settings['styling'] : array();
@@ -690,6 +721,10 @@ function select2_field_widget_form_alter(&$element, &$form_state, $context) {
   $settings = array_merge($settings, $styling_settings);
   
   $element['#select2'] = $settings;
+  
+  if (isset($element['#autocomplete_path'])) {
+    $settings['allow_add_onfly'] = FALSE;
+  }
   
   if (isset($settings['allow_add_onfly']) && $settings['allow_add_onfly']) {
     

@@ -168,7 +168,7 @@
 					  Drupal.settings.select_2.elements[id].tags == undefined) {
 					  
 					  //for hidden elements "data" or "query" properties mus be defined
-					  
+					  console.error('Error: Can\'t attach Select2 plugin - data source not defined, you must define one of following properties in options: "data", "query", "ajax" or "tags"!');
 					  skip_element = true;
 				  } else {
 					  
@@ -296,7 +296,7 @@
 					  
 					 $element.select2(options);
 					 
-					// need fix select2 container width
+					 // need fix select2 container width
 					 if ($element.select2("container").width() > 0 
 						 && options.width != undefined 
 						 && (options.width == 'element' || options.width == 'resolve')) {
@@ -305,6 +305,10 @@
 						 $element.select2("container").width(cur_width + 34);
 						 
 					 }
+					 
+					 //need to disable focusin.dialog event
+					 
+					 $(document).unbind("focusin.dialog");
 					 
 					 if ($.fn.sortable != undefined && 
 					   options.jqui_sortable != undefined && 
