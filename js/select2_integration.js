@@ -306,6 +306,10 @@
 						 
 					 }
 					 
+					 if ($element.hasClass('error')) {
+						 $element.select2("container").addClass('error');
+					 }
+					 
 					 //need to disable focusin.dialog event
 					 
 					 $(document).unbind("focusin.dialog");
@@ -356,8 +360,9 @@
 			  }
 		  }
 		  
-		  if (jqVersionSplited[1]*1 < 8 
-			  && ( $("select.use-select-2, input.use-select-2").lenght > 0 || (Drupal.settings.select_2.process_all_selects_on_page && $('select').lenght > 0))) {
+		  if (!Drupal.settings.select_2.no_version_check &&
+		      jqVersionSplited[1]*1 < 8 
+			  && ( $("select.use-select-2, input.use-select-2").lenght > 0 || (Drupal.settings.select_2.process_all_selects_on_page && $('select').length > 0))) {
 			  console.error('Error: ' + Drupal.t('jQuery 1.8.x or higher required for using "Select2 integration" module. Some of your forms element may be not working properly.'));
 			  return;
 		  }

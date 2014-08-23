@@ -475,8 +475,6 @@ function select2_process_textfield($element, &$form_state) {
       $s2_ac_defaults['tokenSeparators'] = array(',');
       $s2_ac_defaults['initSelection'] = 'taxonomy_term_ref_ac_s2_init_selecttion';
       
-      $s2_ac_defaults['initSelection'] = 'taxonomy_term_ref_ac_s2_init_selecttion';
-      
       if ($element['#value']) {
         $s2_ac_defaults['comma_replacement'] = SELECT2_COMMA_REPLACEMENT;
       }
@@ -959,6 +957,7 @@ function _select2_post_load_library_callback(&$library, $version, $variant) {
     ),
     'default_settings' => _select2_default_settings(),
     'process_all_selects_on_page' => $process_all_selects,
+    'no_version_check' => variable_get('select2_disable_jq_version_check', false) ? TRUE : FALSE,
     'elements' => array(),
   )), 'setting');
   
@@ -993,6 +992,8 @@ function _select2_element_validate_integer_positive_or_zero($element, &$form_sta
 
 function select2_check_jq_front_end_version() {
   
+  if (variable_get('select2_disable_jq_version_check', false)) return TRUE;
+  
   $jq_version = variable_get('jquery_update_jquery_version', '');
   
   if ($jq_version) {
@@ -1007,6 +1008,8 @@ function select2_check_jq_front_end_version() {
 
 function select2_check_jq_admin_mode_version() {
 
+  if (variable_get('select2_disable_jq_version_check', false)) return TRUE;
+  
   if (variable_get('select2_use_for_all_select_elements_for_admin_pages')) {
 
     $jq_version = variable_get('jquery_update_jquery_version', '');
