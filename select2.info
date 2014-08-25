@@ -6,5 +6,5 @@ package = User interface
 
 configure = admin/config/user-interface/select2_settings
 
-dependencies[] = libraries (>=7.x-2.4)
+dependencies[] = libraries (>=7.x-2.2)
 dependencies[] = jquery_update
