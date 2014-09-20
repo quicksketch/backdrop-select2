@@ -1,12 +1,4 @@
-.select2-choices,
-.select2-choice
-{
-  /*min-width: 230px;*/
-}
-.select2-drop
-{
-  /*min-width: 240px;*/
-}
+
 .select2-container.error
 {
   background-image: none;
@@ -26,7 +18,7 @@
 
 .select2-container-multi.one-option-per-line .select2-choices .select2-search-choice
 {
-	clear: both;
+  clear: both;
 }
 
 .select2-result .visible-on-hover
@@ -52,7 +44,7 @@
 div.image-style-new div.select2-container,
 .webform-container-inline div.select2-container
 {
-	display: inline-block;
+  display: inline-block;
 }
 div.image-style-new div.select2-display-none,
 .webform-container-inline div.select2-display-none,
@@ -61,13 +53,11 @@ div.image-style-new div.select2-display-none,
   display: none;
 }
 
-/**/
 .hierarchical-select .select2-container
 {
-	margin-right: 15px;
+  margin-right: 15px;
 }
 .hierarchical-select .select2-container:LAST-CHILD
 {
-	margin-right: 0;
+  margin-right: 0;
 }
-/**/
