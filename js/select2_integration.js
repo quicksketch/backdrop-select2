@@ -138,7 +138,8 @@
       var skip_element = false;
 
       if (id != undefined) {
-        if (Drupal.settings.select_2.excludes.by_id.values.indexOf(id) >= 0) {
+        var excludeIds = Drupal.settings.select_2.excludes.by_id.values;
+        if ($.inArray(id, excludeIds)) {
           return;
         } else if (Drupal.settings.select_2.excludes.by_id.reg_exs.length > 0) {
           // check by regexs for ids
