@@ -139,7 +139,7 @@
 
       if (id != undefined) {
         var excludeIds = Drupal.settings.select_2.excludes.by_id.values;
-        if ($.inArray(id, excludeIds)) {
+        if ($.inArray(id, excludeIds) >= 0) {
           return;
         } else if (Drupal.settings.select_2.excludes.by_id.reg_exs.length > 0) {
           // check by regexs for ids
