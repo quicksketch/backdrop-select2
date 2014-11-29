@@ -28,7 +28,6 @@
   min-width: 395px;
 }
 .container-inline .select2-container,
-.container-inline .select2-container .select2-choice,
 div.image-style-new div.select2-container,
 .webform-container-inline div.select2-container {
   display: inline-block;
@@ -43,4 +42,16 @@ div.image-style-new div.select2-display-none,
 }
 .hierarchical-select .select2-container:LAST-CHILD {
   margin-right: 0;
+}
+.select2-container .select2-choice {
+  padding: 0 0 0 4px;
+}
+.select2-container .select2-choice abbr {
+  top: 6px;
+}
+.select2-container {
+  max-width: 100%;
+}
+#views-ui-add-form .form-item-show-tagged-with .description {
+  display: none;
 }
