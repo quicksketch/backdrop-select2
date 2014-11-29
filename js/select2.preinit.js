@@ -1,3 +1,8 @@
+/**
+ * @file
+ * Preinit functions for Select2 integration
+ */
+
 (function ($) {
 
   Drupal.select2functions = {};
@@ -36,9 +41,7 @@
           $(document).trigger('select2_settings_updated');
 
         });
-
     }
-
   }
 
 })(jQuery);

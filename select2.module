@@ -224,7 +224,7 @@ function select2_select_element_process($element, &$form_state) {
 
   if (isset($_select2_jq_version_warning) ||
       ((!_select2_current_path_is_admin(current_path()) && !select2_check_jq_front_end_version()) ||
-       (_select2_current_path_is_admin(current_path()) && !select2_check_jq_admin_mode_version()))) {
+      (_select2_current_path_is_admin(current_path()) && !select2_check_jq_admin_mode_version()))) {
 
     if (!isset($_select2_jq_version_warning)) {
       drupal_set_message(t('Select2 plugin can\'t be used with current jQuery version. Check <a href="@status_info">status info</a> for other instructions.',
@@ -302,9 +302,9 @@ function select2_select_element_process($element, &$form_state) {
   $element_id = isset($element['#id']) ? $element['#id'] : (isset($element['#attributes']['id']) ? $element['#attributes']['id'] : drupal_clean_css_identifier($element['#name']));
 
   if ($element['#type'] == 'select2_hidden' &&
-     isset($element['#options']) &&
-     is_array($element['#options']) &&
-     (!isset($element['#validated']) || !$element['#validated'])) {
+      isset($element['#options']) &&
+      is_array($element['#options']) &&
+      (!isset($element['#validated']) || !$element['#validated'])) {
 
     $element['#attributes']['id'] = $element_id;
 
@@ -474,7 +474,7 @@ function select2_process_textfield($element, &$form_state) {
       $element['#description'] .= $description_prefix
                                  . t('For change order of terms, you can drag and drop them into desired position.')
                                  . '<br />'
-                                 . t('Symbol "," will automatically separate the inputted terms.');
+                                 . t('Symbol &quot;,&quot; will aumaticaly separete the inputted terms.');
     }
 
   }
@@ -1189,66 +1189,84 @@ function _select2_set_element_settings($element_id, $settings) {
       }
     }
   }
-  
+
   if ($js_setting_key == -1) {
     drupal_add_js(array('select_2' => array(
       'elements' => array(
         $element_id => $settings,
       ),
-    )), 'setting');
+    )),
+    'setting');
+
     return;
   }
 
   if (!isset($js['settings']['data'][$js_setting_key]['select_2']['elements'][$element_id])) {
     $js['settings']['data'][$js_setting_key]['select_2']['elements'][$element_id] = $settings;
-  } 
+  }
   else {
     $js['settings']['data'][$js_setting_key]['select_2']['elements'][$element_id] = array_replace_recursive($js['settings']['data'][$js_setting_key]['select_2']['elements'][$element_id], $settings);
   }
-  
+
 }
 
-
+/**
+ * Determines whether a current path is in the administrative section of the site.
+ *
+ * By default, paths are considered to be non-administrative. If a path does
+ * not match any of the patterns in path_get_admin_paths(), or if it matches
+ * both administrative and non-administrative patterns, it is considered
+ * non-administrative.
+ *
+ * @return
+ *   TRUE if the path is administrative, FALSE otherwise.
+ *
+ * @see path_get_admin_paths()
+ * @see hook_admin_paths()
+ * @see hook_admin_paths_alter()
+ */
 function _select2_current_path_is_admin() {
-  
+
   $result = &drupal_static(__FUNCTION__, NULL);
-  
-  if ($result !== NULL) return $result;
-  
+
+  if ($result !== NULL){
+    return $result;
+  }
+
   if (path_is_admin(current_path())) {
     $result = TRUE;
     return TRUE;
   }
-  
+
   // AJAX check
-  if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) 
+  if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])
       && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest'
       && !empty($_SERVER['HTTP_REFERER'])) {
-    
-    // need to check request refferer url for admin path
-    
+
+    // Need to check request refferer url for admin path
+
     $referrer_url = $_SERVER['HTTP_REFERER'];
-    
+
     $site_url_prefix = url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q=');
-    
+
     $prefix_pos = strpos($referrer_url, $site_url_prefix);
-    
+
     if ($prefix_pos === FALSE || $prefix_pos > 0) {
       $result = FALSE;
       return FALSE;
     }
-    
+
     $referrer_url_path = str_replace($site_url_prefix, '', $referrer_url);
-    
+
     $patterns = path_get_admin_paths();
-    
+
     if (path_is_admin($referrer_url_path)) {
       $result = TRUE;
       return TRUE;
     }
 
   }
-  
+
   $result = FALSE;
   return FALSE;
 }

@@ -14,7 +14,8 @@ define('SELECT2_DEFAULT_TAG', '3.4.5');
 /**
  * Implements hook_drush_command().
  *
- * @See drush_parse_command() for a list of recognized keys.
+ * For a list of recognized keys
+ * @See drush_parse_command()
  */
 function select2_drush_command() {
 
