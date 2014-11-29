@@ -315,11 +315,12 @@
           $element.select2(options);
 
           // need fix select2 container width
-          if ($element.select2("container").width() > 0 && options.width != undefined && (options.width == 'element' || options.width == 'resolve')) {
+          if ($element.select2("container").width() > 0
+              && options.width != undefined
+              && (options.width == 'element' || options.width == 'resolve')) {
 
             var cur_width = $element.select2("container").width();
-            $element.select2("container").width(cur_width + 34);
-
+            //$element.select2("container").width(cur_width + 34);
           }
 
           if ($element.hasClass('error')) {
