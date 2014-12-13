@@ -56,6 +56,7 @@ function select2_preprocess_page($vars) {
       libraries_load('select2', $variant);
     }
   }
+
 }
 
 /**
@@ -952,7 +953,7 @@ function _select2_post_load_library_callback(&$library, $version, $variant) {
 
   }
 
-  $init_inline_script = '(function ($) {Drupal.Select2 = {base_root:" ' . $base_root . ' /"}; ' . $settinings_updated_flag . ' })(jQuery)';
+  $init_inline_script = '(function ($) {Drupal.Select2 = {base_root:" ' . $base_root . '/"}; ' . $settinings_updated_flag . ' })(jQuery)';
 
   drupal_add_js($init_inline_script, array('type' => 'inline', 'weight' => -1100));
 
@@ -974,25 +975,28 @@ function _select2_post_load_library_callback(&$library, $version, $variant) {
 
   }
 
-  drupal_add_js(
-    array(
-      'select_2' => array(
-        'excludes' => array(
-          'by_id' => array(
-            'values' => array(),
-            'reg_exs' => array(),
-          ),
-          'by_class' => array(),
-          'by_selectors' => array(),
-        ),
-        'default_settings' => _select2_default_settings(),
-        'process_all_selects_on_page' => $process_all_selects,
-        'no_version_check' => variable_get('select2_disable_jq_version_check', FALSE) ? TRUE : FALSE,
-        'elements' => array(),
-      ),
-    ), 'setting');
+  $settings = _select2_set_exuled_for_settings();
 
-  _select2_set_exuled_for_settings();
+  $settings2 = array(
+    'select_2' => array(
+      'excludes' => array(
+        'by_id' => array(
+          'values' => array(),
+          'reg_exs' => array(),
+        ),
+        'by_class' => array(),
+        'by_selectors' => array(),
+      ),
+      'default_settings' => _select2_default_settings(),
+      'process_all_selects_on_page' => $process_all_selects,
+      'no_version_check' => variable_get('select2_disable_jq_version_check', FALSE) ? TRUE : FALSE,
+      'elements' => array(),
+    ),
+  );
+
+  $seeting_result = array_merge_recursive($settings, $settings2);
+
+  _select2_set_js_settings($seeting_result);
 
   $lang = '';
 
@@ -1078,6 +1082,13 @@ function select2_check_jq_admin_mode_version() {
  */
 function _select2_set_exuled_for_settings() {
 
+  $select2_settings = array(
+    'select_2' => array(
+      'excludes' => array(
+      ),
+    ),
+  );
+
   if (variable_get('select2_excluded_ids', '')) {
 
     $ids = explode("\r\n", variable_get('select2_excluded_ids', ''));
@@ -1095,45 +1106,36 @@ function _select2_set_exuled_for_settings() {
       }
     }
 
-    drupal_add_js(
-      array(
-        'select_2' => array(
-          'excludes' => array(
-            'by_id' => array(
-              'values' => $ids_values,
-              'reg_exs' => $ids_reg_exs,
-            ),
-          ),
-        ),
-      ), 'setting');
+    if ($ids_values) {
+      $select2_settings['select_2']['excludes']['by_id']['values'] = $ids_values;
+    }
+    if ($ids_reg_exs) {
+      $select2_settings['select_2']['excludes']['by_id']['reg_exs'] = $ids_reg_exs;
+    }
+
   }
 
   if (variable_get('select2_excluded_cleasses', '')) {
     $classes = explode("\r\n", variable_get('select2_excluded_cleasses', ''));
 
-    drupal_add_js(
-      array(
-        'select_2' => array(
-          'excludes' => array(
-            'by_class' => $classes,
-          ),
-        ),
-      ), 'setting');
+    $select2_settings['select_2']['excludes']['by_class'] = $classes;
+
   }
 
   if (variable_get('select2_excluded_selectors', '')) {
     $selectors = explode("\r\n", variable_get('select2_excluded_selectors', ''));
 
-    drupal_add_js(
-      array(
-        'select_2' => array(
-          'excludes' => array(
-            'by_selectors' => $selectors,
-          ),
-        ),
-      ), 'setting');
+    $select2_settings['select_2']['excludes']['by_selectors'] = $selectors;
+
   }
 
+//   if ($select2_settings['select_2']['excludes']) {
+
+//     $js = drupal_add_js($select2_settings, 'setting');
+
+//   }
+
+  return $select2_settings;
 }
 
 /**
@@ -1206,6 +1208,50 @@ function _select2_set_element_settings($element_id, $settings) {
   }
   else {
     $js['settings']['data'][$js_setting_key]['select_2']['elements'][$element_id] = array_replace_recursive($js['settings']['data'][$js_setting_key]['select_2']['elements'][$element_id], $settings);
+  }
+
+}
+
+function _select2_set_js_settings($settings) {
+  $js = &drupal_static('drupal_add_js', array());
+
+  if (!isset($js['settings']) || !isset($js['settings']['data'])) {
+    drupal_add_js(
+    array(
+      'select_2' => $settings['select_2'],
+    ),
+    'setting');
+
+    return;
+  }
+
+  $js_setting_key = &drupal_static('select2_js_setting_key', -1);
+
+  if ($js_setting_key == -1) {
+    foreach ($js['settings']['data'] as $key => $data) {
+      foreach ($data as $scope_name => $scope_data) {
+        if ($scope_name == 'select_2') {
+          $js_setting_key = $key;
+        }
+      }
+    }
+  }
+
+  if ($js_setting_key == -1) {
+    drupal_add_js(
+    array(
+      'select_2' => $settings['select_2'],
+    ),
+    'setting');
+
+    return;
+  }
+
+  if (!isset($js['settings']['data'][$js_setting_key]['select_2'])) {
+    $js['settings']['data'][$js_setting_key]['select_2'] = $settings['select_2'];
+  }
+  else {
+    $js['settings']['data'][$js_setting_key]['select_2'] = array_replace_recursive($js['settings']['data'][$js_setting_key]['select_2'], $settings['select_2']);
   }
 
 }

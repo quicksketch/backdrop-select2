@@ -9,14 +9,7 @@
 
   if (Drupal.Select2 != undefined && Drupal.Select2.base_root != undefined) {
 
-    Drupal.Select2.current_exludes = {
-      by_class: [],
-      by_id: {
-        reg_exs: [],
-        values: []
-      },
-      by_selectors: []
-    };
+    Drupal.Select2.current_exludes = false;
 
     if (Drupal.Select2.settings_updated == undefined) {
 
