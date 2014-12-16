@@ -312,6 +312,14 @@
 
           }
 
+          // disabled_options
+          if (typeof(options.disabled_options) != 'undefined') {
+            //
+            $.each(options.disabled_options, function (index, value) {
+              $('option[value="' + value + '"]', $element).prop('disabled', true);
+            });
+          }
+
           $element.select2(options);
 
           // need fix select2 container width
