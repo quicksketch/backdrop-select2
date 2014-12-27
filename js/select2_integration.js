@@ -238,9 +238,7 @@
               if (options.placeholder == undefined) {
                 options.placeholder = $('option[value=""]', $element).text();
               }
-
-              $('option[value=""]', $element).html('').removeAttr('selected');
-
+              $('option[value=""]', $element).html('');
             }
 
           }
