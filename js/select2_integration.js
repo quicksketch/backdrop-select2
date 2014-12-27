@@ -121,7 +121,7 @@
       return this.replace(/"$/, '').replace(/^"/, '');
     }
 
-    return this;
+    return this.toString();
   };
 
   $.fn.atachSelect2 = function () {
