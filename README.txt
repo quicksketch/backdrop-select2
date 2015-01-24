@@ -1,4 +1,4 @@
-Drupal select2 module:
+Backdrop select2 module:
 ------------------------
 Maintainers:
   Andrey G Polyakov (http://drupal.org/user/1200780)
@@ -10,7 +10,7 @@ Overview:
 --------
 Select2 is a jQuery (1.8.2+) based replacement for select boxes.
 It supports searching, remote data sets, and infinite scrolling of results.
-This module allows for integration of Select2 into Drupal.
+This module allows for integration of Select2 into Backdrop.
 The jQuery library is a part of Drupal since version 5+.
 
 * jQuery - http://jquery.com/
@@ -22,7 +22,7 @@ Features:
 
 The Select2 module:
 
-* Provide function for using Select2 plugin by Drupal Form API
+* Provide function for using Select2 plugin by Backdrop Form API
 
 The Colorbox plugin:
 
